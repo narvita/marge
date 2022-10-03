@@ -6,14 +6,15 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "./interfaces/IBERC721.sol";
 
 
-
-
 contract Merge is ERC721, ERC721URIStorage {
     address public owner;
+    using Counters for Counters.Counter;
 
     string public __baseURI;
     address a;
     address b;
+    Counters.Counter private _tokenIdCounter;
+    
 
     event Aproove(address to, uint256 tokenId);
     event SafeTransferFrom(address from, address to, uint256 token, bytes data);
@@ -23,10 +24,10 @@ contract Merge is ERC721, ERC721URIStorage {
      constructor(string memory name, string memory symbol, string memory baseURI, address _a, address _b ) ERC721(name, symbol) {
         owner = msg.sender;
         __baseURI = baseURI;
+        _tokenIdCounter.increment();
         a = _a;
         b = _b;
     }
-
     
     modifier OnlyOwner() {
         require(msg.sender == owner, "You are not owner the contract");
@@ -36,6 +37,8 @@ contract Merge is ERC721, ERC721URIStorage {
     function _baseURI() internal view override returns (string memory) {
         return __baseURI;
     }
+
+    
 
     function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
         super._burn(tokenId);
@@ -49,7 +52,7 @@ contract Merge is ERC721, ERC721URIStorage {
         emit Burn(msg.sender, tokenId);
         _burn(tokenId);
     }
-    
+
     function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
         return super.tokenURI(tokenId);
     }
@@ -67,12 +70,19 @@ contract Merge is ERC721, ERC721URIStorage {
         _approve(to, tokenId);
     }
 
-    function safeMint(uint256 n, uint256 m) public {
-        IBERC721(a).burn(n);
-        IBERC721(b).burn(m);
+    function safeMint(uint256 n, uint256 m) public  {
+        address aContractTokenOwner = IBERC721(a).ownerOf(msg.sender, n);
+        address bContractTokenOwner = IBERC721(b).ownerOf(msg.sender, m);
+        uint256 token = n + m;
 
-        _safeMint(msg.sender, 1);
-        emit SafeMint(msg.sender, 1);
+        require(msg.sender == aContractTokenOwner, "You are not a token owner");
+        require(msg.sender == bContractTokenOwner, "You are not a token owner");
+        
+        IBERC721(a).burn(n, address(this));
+        IBERC721(b).burn(m, address(this));
+
+        _safeMint(msg.sender,token);
+        emit SafeMint(msg.sender,token);
     }
 
     function transferFrom(address from, address to, uint256 tokenId) public override {

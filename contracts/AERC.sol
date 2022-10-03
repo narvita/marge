@@ -5,9 +5,9 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 contract AERC is ERC721, ERC721URIStorage {
-     address public owner;
-
+    address public owner;   
     string public __baseURI;
+    address contractAddress;
 
     event Aproove(address to, uint256 tokenId);
     event SafeTransferFrom(address from, address to, uint256 token, bytes data);
@@ -28,6 +28,10 @@ contract AERC is ERC721, ERC721URIStorage {
         return __baseURI;
     }
 
+    function setContractAddress(address contrAddr) public  {
+        contractAddress = contrAddr;
+    }
+
     function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
         super._burn(tokenId);
     }
@@ -36,8 +40,8 @@ contract AERC is ERC721, ERC721URIStorage {
         _setApprovalForAll(_msgSender(), operator, approved);
     }
 
-    function burn(uint256 tokenId) public {
-        _approve(msg.sender, tokenId);
+    function burn(uint256 tokenId,  address contractAddr) public {
+        _approve(contractAddr, tokenId);
         emit Burn(msg.sender, tokenId);
         _burn(tokenId);
     }
@@ -46,6 +50,12 @@ contract AERC is ERC721, ERC721URIStorage {
         return super.tokenURI(tokenId);
     }
 
+    function ownerOf(address sender, uint256 tokenId) view public returns (address) {
+        address tokenOwner = ownerOf(tokenId);
+        require(sender == tokenOwner, "you are not a token owner");
+        return tokenOwner;
+    }
+    
     function approve(address to, uint256 tokenId) public override {
         address assetOwner = ERC721.ownerOf(tokenId);
         require(to != assetOwner, "ERC721: approval to current owner");
