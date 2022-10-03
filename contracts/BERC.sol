@@ -5,8 +5,8 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 contract BERC is ERC721, ERC721URIStorage {
-     address public owner;
-
+    address public owner;
+    address contractAddress;
     string public __baseURI;
 
     event Aproove(address to, uint256 tokenId);
@@ -25,8 +25,19 @@ contract BERC is ERC721, ERC721URIStorage {
         _;
     }
 
+
     function _baseURI() internal view override returns (string memory) {
         return __baseURI;
+    }
+
+    function ownerOf(address sender, uint256 tokenId) view public returns (address) {
+        address tokenOwner = ownerOf(tokenId);
+        require(sender == tokenOwner, "you are not a token owner");
+        return tokenOwner;
+    }
+
+    function setContractAddress(address contrAddr) public  {
+        contractAddress = contrAddr;
     }
 
     function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
@@ -37,9 +48,9 @@ contract BERC is ERC721, ERC721URIStorage {
         _setApprovalForAll(_msgSender(), operator, approved);
     }
 
-    function burn(uint256 tokenId) public {
-        _approve(msg.sender, tokenId);
-        emit Burn(msg.sender, tokenId);
+    function burn(uint256 tokenId, address contractAddr) public {
+        _approve(contractAddr, tokenId);
+        emit Burn(address(this), tokenId);
         _burn(tokenId);
     }
     
@@ -59,6 +70,8 @@ contract BERC is ERC721, ERC721URIStorage {
 
         _approve(to, tokenId);
     }
+
+
 
     function safeMint(address to, uint256 tokenId) public {
         _safeMint(to, tokenId);
